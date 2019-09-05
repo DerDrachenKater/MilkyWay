@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>CGV-Aufgabe 1</title>
+	<script src="babylon.custom.js"></script>
+	<style type="text/css">
+		html, body, canvas {
+			width: 100%;
+			height: 100%;
+			padding: 0;
+			margin: 0;
+			overflow: hidden;
+		}
+	</style>
+</head>
+<body>
+<canvas id="renderCanvas"></canvas>
+<script>
+	// Check support
+	if (!BABYLON.Engine.isSupported())
+	{
+		window.alert('Browser not supported');
+	} else
+	{
+
+		// BEGIN SETUP SCENE
+		var canvas = document.getElementById("renderCanvas");
+		var engine = new BABYLON.Engine(canvas, true);
+
+		var scene = new BABYLON.Scene(engine);
+		var camera = new BABYLON.ArcRotateCamera("ArcRotateCamera", -Math.PI / 4.0, 0.25 * Math.PI, 2.5,
+			new BABYLON.Vector3(0, 0, 0), scene);
+
+		var sun = BABYLON.Mesh.CreateSphere("Sun", 10.0, 0.5, scene);
+		var earth = BABYLON.Mesh.CreateSphere("Earth", 30.0, 0.3, scene);
+		var moon = BABYLON.Mesh.CreateSphere("Moon", 20.0, 0.075, scene);
+
+		var mars = BABYLON.Mesh.CreateSphere("Mars", 20.0, 0.175, scene);
+		var jupiter = BABYLON.Mesh.CreateSphere("Jupiter", 20.0, 3.37, scene);
+
+		var material1 = new BABYLON.StandardMaterial("default1", scene);
+		material1.diffuseTexture = new BABYLON.Texture("assets/earth.jpg", scene);
+		material1.specularColor = new BABYLON.Color3(0, 0, 0);
+		material1.emissiveColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+
+		var material2 = new BABYLON.StandardMaterial("default2", scene);
+		material2.diffuseTexture = new BABYLON.Texture("assets/moon.jpg", scene);
+		material2.specularColor = new BABYLON.Color3(0, 0, 0);
+		material2.emissiveColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+
+		var material3 = new BABYLON.StandardMaterial("default3", scene);
+		material3.diffuseTexture = new BABYLON.Texture("assets/sun.jpg", scene);
+		material3.specularColor = new BABYLON.Color3(0, 0, 0);
+		material3.emissiveColor = new BABYLON.Color3(1, 1, 1);
+
+		var material4 = new BABYLON.StandardMaterial("default4", scene);
+		material4.diffuseTexture = new BABYLON.Texture("assets/mars.jpg", scene);
+		material4.specularColor = new BABYLON.Color3(0, 0, 0);
+		material4.emissiveColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+
+		var material5 = new BABYLON.StandardMaterial("default5", scene);
+		material5.diffuseTexture = new BABYLON.Texture("assets/jupiter.jpg", scene);
+		material5.specularColor = new BABYLON.Color3(0, 0, 0);
+		material5.emissiveColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+
+		earth.material = material1;
+		moon.material = material2;
+		sun.material = material3;
+
+		mars.material = material4;
+		jupiter.material = material5;
+
+		var light = new BABYLON.PointLight("dir01", new BABYLON.Vector3(-0.0, -0.0, 0.0), scene);
+		light.diffuse = new BABYLON.Color3(1.0, 1.0, 1.0);
+
+		scene.clearColor = new BABYLON.Color3(0.02, 0.02, 0.1);
+
+		// Show coordinate axes
+		var cylinder1 = BABYLON.Mesh.CreateCylinder("cylinder1", 0.2, 0.01, 0.01, 4, scene);
+		var cylinder2 = BABYLON.Mesh.CreateCylinder("cylinder2", 0.2, 0.01, 0.01, 4, scene, false);
+		var cylinder3 = BABYLON.Mesh.CreateCylinder("cylinder3", 0.2, 0.01, 0.01, 4, scene, false);
+		var cmat1 = new BABYLON.StandardMaterial("cmat1", scene);
+		var cmat2 = new BABYLON.StandardMaterial("cmat2", scene);
+		var cmat3 = new BABYLON.StandardMaterial("cmat3", scene);
+		cmat1.emissiveColor = new BABYLON.Color3(1, 0, 0); // x-axis: red
+		cmat2.emissiveColor = new BABYLON.Color3(1, 1, 0); // y-axis: yellow
+		cmat3.emissiveColor = new BABYLON.Color3(0, 1, 0); // z-axis: green
+		cylinder1.material = cmat1;
+		cylinder2.material = cmat2;
+		cylinder3.material = cmat3;
+
+		cylinder1.position.x = 0.1;
+		cylinder1.rotation.z = 0.5 * Math.PI;
+		cylinder2.position.y = 0.1;
+		cylinder2.rotation.z = 0.0;
+		cylinder3.position.z = 0.1;
+		cylinder3.rotation.x = 0.5 * Math.PI;
+		// END SETUP SCENE
+
+		earth.position.x = 1.0;
+		earth.position.y = 0.0;
+		earth.position.z = 0.0;
+
+		moon.position.x = 0.5;
+		moon.position.y = 0.0;
+		moon.position.z = 0.0;
+
+		mars.position.x = 2.0;
+		mars.position.y = 0.0;
+		mars.position.z = 0.0;
+
+		jupiter.position.x = 6.0;
+		jupiter.position.y = 0.0;
+		jupiter.position.z = 0.0;
+
+		var d = new Date();
+		var startTime = d.getTime();
+		var lastTime = startTime;
+
+		var earth_rotation = 365.256;                                    // siderische Umlaufzeit der Erde in Tagen
+		var moon_rotation = 27.322;                                     // siderische Umlaufzeit des Mondes in Tagen
+		var mars_rotation = 686.980;                                    // siderische Umlaufzeit des Mars in Tagen
+		var jupiter_rotation = 883.9322;                                   // siderische Umlaufzait des Jupiter in Tagen
+
+
+		//Skybox
+		var skybox = BABYLON.Mesh.CreateBox("skyBox", 1000.0, scene);
+		var skyboxMaterial = new BABYLON.StandardMaterial("assets/skybox", scene);
+		skyboxMaterial.backFaceCulling = false;
+		skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("assets/skybox/skybox", scene);
+		skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+		skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+		skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+		skybox.material = skyboxMaterial;
+
+		var moon_local_pos = new BABYLON.Vector3(-1.0, 0, 0);
+		var sec = prompt(" Bitte Umlaufgeschwindigkeit um die Sonne in Sekunden angeben ", "60");
+
+		scene.beforeRender = function ()
+		{
+			var d = new Date();
+			var time = d.getTime();                        // get milliseconds since 1970
+			lastTime = time;
+
+			//Geschwindigkeiten Sonnenumrundung
+			var earthSpeed = ((2 * Math.PI) / (60 * sec));
+			var moonSpeed = (((2 * Math.PI) / (60 * sec)) * (earth_rotation / moon_rotation));
+			var marsSpeed = (((2 * Math.PI) / (60 * sec)) / 1.881);
+			var jupiterSpeed = (((2 * Math.PI) / (60 * sec)) / 11.855);
+
+			//Hilfsvariable
+			var earthX_temp = (Math.cos(0) * earth.position.x) + (Math.sin(-earthSpeed) * earth.position.z);
+
+			earth.position.z = (Math.sin(earthSpeed) * earthX_temp) + (Math.cos(0) * earth.position.z);
+			earth.position.x = earthX_temp;
+			//Translation ändern
+			//moon.position.x = (Math.cos(0) * moon.position.x) + (Math.sin(-earthSpeed) * moon.position.z);
+			//moon.position.z = (Math.sin(earthSpeed) * moon.position.x) + (Math.cos(0) * moon.position.z);
+
+			earth.rotation.y = earth.rotation.y - ((2 * Math.PI) / (60 * sec)) * earth_rotation;
+
+			//Hilfsvariable für Translation
+			var moonX_temp = moon.position.x - earth.position.x;
+			var moonZ_temp = moon.position.z - earth.position.z;
+
+			moonX_temp = (Math.cos(0) * moonX_temp) + (Math.sin(-moonSpeed) * moonZ_temp);
+			moonZ_temp = (Math.sin(moonSpeed) * moonX_temp) + (Math.cos(0) * moonZ_temp);
+
+			moon.position.x = moonX_temp + earth.position.x;
+			moon.position.z = moonZ_temp + earth.position.z;
+
+			moon.rotation.y = moon.rotation.y - ((2 * Math.PI) / (60 * sec)) * (earth_rotation / moon_rotation);
+
+			mars.position.x = (Math.cos(0) * mars.position.x) + (Math.sin(-marsSpeed) * mars.position.z);
+			mars.position.z = (Math.sin(marsSpeed) * mars.position.x) + (Math.cos(0) * mars.position.z);
+
+			mars.rotation.y = mars.rotation.y - ((2 * Math.PI) / (60 * sec)) * mars_rotation;
+
+			jupiter.position.x = (Math.cos(0) * jupiter.position.x) + (Math.sin(-jupiterSpeed) * jupiter.position.z);
+			jupiter.position.z = (Math.sin(jupiterSpeed) * jupiter.position.x) + (Math.cos(0) * jupiter.position.z);
+
+			jupiter.rotation.y = jupiter.rotation.y - ((2 * Math.PI) / (60 * sec)) * jupiter_rotation;
+
+			sun.rotation.y = sun.rotation.y - ((2 * Math.PI) / (60 * sec)) * (earth_rotation / 25.38);
+
+		};
+
+		scene.activeCamera.attachControl(canvas);
+		// Render loop
+		var renderLoop = function ()
+		{
+			// Start new frame
+			engine.beginFrame();
+
+			scene.render();
+
+			// Present
+			engine.endFrame();
+
+			// Register new frame
+			BABYLON.Tools.QueueNewFrame(renderLoop);
+		};
+		BABYLON.Tools.QueueNewFrame(renderLoop);
+
+		// Resize
+		window.addEventListener("resize", function ()
+		{
+			engine.resize();
+		});
+	}
+	;
+</script>
+</body>
+</html>
